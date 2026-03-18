@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arna Roy's ZKP Multi-Verifier System for hackathon </title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0d12;
+    --bg2: #0f1318;
+    --bg3: #151b24;
+    --border: #1e2836;
+    --border2: #253040;
+    --orange: #ff6b00;
+    --orange2: #ff8c38;
+    --orange-dim: rgba(255,107,0,0.12);
+    --orange-glow: rgba(255,107,0,0.25);
+    --green: #00e676;
+    --green-dim: rgba(0,230,118,0.12);
+    --red: #ff3d3d;
+    --red-dim: rgba(255,61,61,0.12);
+    --text: #c9d6e3;
+    --text2: #7a8fa6;
+    --text3: #4a5a6a;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,107,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,107,0,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 1;
+    padding: 28px 40px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(10,13,18,0.9);
+    backdrop-filter: blur(10px);
+  }
+
+  .header-left { display: flex; align-items: center; gap: 16px; }
+
+  .logo-mark {
+    width: 38px; height: 38px;
+    background: var(--orange);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 13px; font-weight: 600;
+    color: #000; flex-shrink: 0;
+  }
+
+  .header-title { font-size: 15px; font-weight: 700; letter-spacing: 0.05em; color: #fff; }
+  .header-sub { font-size: 11px; color: var(--text2); letter-spacing: 0.08em; font-family: var(--mono); margin-top: 2px; }
+
+  .status-pill {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 20px;
+    border: 1px solid var(--border2);
+    font-family: var(--mono); font-size: 11px; color: var(--text2);
+    background: var(--bg2);
+  }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); transition: background 0.3s; }
+  .status-dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  main {
+    position: relative; z-index: 1;
+    padding: 24px 32px 32px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .flow-bar {
+    display: flex; align-items: center; gap: 0;
+    margin-bottom: 24px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 20px;
+    overflow-x: auto;
+  }
+
+  .flow-step {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--text3); white-space: nowrap;
+    transition: color 0.3s;
+  }
+  .flow-step.active { color: var(--orange); }
+  .flow-step.done { color: var(--green); }
+  .flow-num {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1px solid currentColor;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600; flex-shrink: 0;
+  }
+  .flow-arrow { color: var(--border2); margin: 0 12px; font-size: 14px; }
+
+  .grid-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .grid-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.3s;
+    opacity: 0;
+    animation: fadeIn 0.4s ease forwards;
+  }
+  .panel:nth-child(1) { animation-delay: 0.05s; }
+  .panel:nth-child(2) { animation-delay: 0.1s; }
+  .panel:nth-child(3) { animation-delay: 0.15s; }
+  .panel:nth-child(4) { animation-delay: 0.2s; }
+  .panel:nth-child(5) { animation-delay: 0.25s; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel:hover { border-color: var(--border2); }
+  .panel.highlight { border-color: var(--orange); box-shadow: 0 0 20px var(--orange-glow); }
+
+  .panel-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg3);
+  }
+
+  .panel-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: var(--orange-dim);
+    border: 1px solid rgba(255,107,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+  }
+
+  .panel-label {
+    font-size: 10px; font-family: var(--mono);
+    color: var(--orange); letter-spacing: 0.1em; font-weight: 500;
+  }
+  .panel-title { font-size: 13px; font-weight: 700; color: #fff; margin-top: 1px; }
+
+  .panel-body { padding: 18px; }
+
+  .field { margin-bottom: 12px; }
+  .field label {
+    display: block; font-size: 10px; font-family: var(--mono);
+    color: var(--text2); margin-bottom: 5px; letter-spacing: 0.05em;
+  }
+  .field input[type="text"],
+  .field input[type="number"] {
+    width: 100%; padding: 7px 10px;
+    background: var(--bg); border: 1px solid var(--border2);
+    border-radius: 5px; color: var(--text);
+    font-family: var(--mono); font-size: 12px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .field input:focus { border-color: var(--orange); }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .checkbox-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px;
+    background: var(--bg); border: 1px solid var(--border2);
+    border-radius: 5px;
+  }
+  .checkbox-row input[type="checkbox"] { accent-color: var(--orange); width: 14px; height: 14px; }
+  .checkbox-row span { font-family: var(--mono); font-size: 12px; color: var(--text); }
+
+  .btn {
+    width: 100%; padding: 10px 16px;
+    border: none; border-radius: 6px;
+    font-family: var(--sans); font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    letter-spacing: 0.03em;
+  }
+  .btn-primary { background: var(--orange); color: #000; }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--orange2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px var(--orange-glow);
+  }
+  .btn-primary:disabled { background: var(--bg3); color: var(--text3); cursor: not-allowed; }
+  .btn-secondary {
+    background: transparent; color: var(--text2);
+    border: 1px solid var(--border2);
+  }
+  .btn-secondary:hover { border-color: var(--orange); color: var(--orange); }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .result-area { margin-top: 14px; display: none; }
+  .result-area.show { display: block; }
+
+  .result-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+
+  .kv-row {
+    display: flex; align-items: flex-start;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .kv-row:last-child { border-bottom: none; }
+  .kv-key { font-family: var(--mono); font-size: 10px; color: var(--text2); flex-shrink: 0; }
+  .kv-val { font-family: var(--mono); font-size: 11px; color: var(--text); text-align: right; word-break: break-all; }
+  .kv-val.orange { color: var(--orange); }
+  .kv-val.green { color: var(--green); }
+
+  .code-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    max-height: 180px;
+    overflow-y: auto;
+    margin-top: 8px;
+  }
+  .code-block pre {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--text2); white-space: pre-wrap;
+    word-break: break-all; line-height: 1.5;
+  }
+  .code-block .json-key { color: #7dd3fc; }
+  .code-block .json-str { color: #86efac; }
+  .code-block .json-num { color: #fca5a5; }
+  .code-block .json-bool { color: var(--orange); }
+
+  .verifier-info {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-family: var(--mono); font-size: 11px; color: var(--text2);
+    line-height: 1.6;
+  }
+  .verifier-info span { color: var(--orange); }
+
+  select {
+    width: 100%; padding: 7px 10px;
+    background: var(--bg); border: 1px solid var(--border2);
+    border-radius: 5px; color: var(--text);
+    font-family: var(--mono); font-size: 12px;
+    outline: none; margin-bottom: 10px;
+    cursor: pointer;
+  }
+  select:focus { border-color: var(--orange); }
+
+  .verdict-badge {
+    display: flex; align-items: center; justify-content: center;
+    padding: 14px; border-radius: 8px;
+    font-family: var(--sans); font-size: 18px; font-weight: 800;
+    letter-spacing: 0.05em; margin-bottom: 12px;
+    transition: all 0.3s;
+  }
+  .verdict-badge.accepted {
+    background: var(--green-dim);
+    border: 1px solid rgba(0,230,118,0.3);
+    color: var(--green);
+  }
+  .verdict-badge.rejected {
+    background: var(--red-dim);
+    border: 1px solid rgba(255,61,61,0.3);
+    color: var(--red);
+  }
+  .verdict-badge.pending {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text3);
+    font-size: 13px; font-weight: 400; font-family: var(--mono);
+  }
+
+  .check-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono); font-size: 11px;
+  }
+  .check-row:last-child { border-bottom: none; }
+  .check-label { color: var(--text2); }
+  .check-val.pass { color: var(--green); }
+  .check-val.fail { color: var(--red); }
+  .check-val.na { color: var(--text3); }
+  /* reserved for future state-specific check styles */
+
+  .tag-green {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    background: var(--green-dim);
+    border: 1px solid rgba(0,230,118,0.25);
+    font-family: var(--mono); font-size: 10px; color: var(--green);
+    margin-top: 10px;
+  }
+
+  .unlink-bar {
+    margin-top: 0;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 24px;
+    opacity: 0;
+    animation: fadeIn 0.4s ease 0.25s forwards;
+  }
+
+  .unlink-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .unlink-title {
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.08em; color: var(--text2);
+    font-family: var(--mono);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .unlink-result {
+    display: none;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .unlink-result.show { display: grid; }
+
+  .unlink-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+  }
+  .unlink-card-label {
+    font-family: var(--mono); font-size: 10px; color: var(--text3);
+    margin-bottom: 6px; letter-spacing: 0.05em;
+  }
+  .unlink-card-val {
+    font-family: var(--mono); font-size: 11px; color: var(--text);
+    word-break: break-all; line-height: 1.5;
+  }
+  .unlink-card-val.highlight { color: var(--orange); }
+  .unlink-card-val.green { color: var(--green); }
+
+  .error-msg {
+    padding: 8px 12px; border-radius: 5px;
+    background: var(--red-dim); border: 1px solid rgba(255,61,61,0.3);
+    font-family: var(--mono); font-size: 11px; color: var(--red);
+    margin-top: 10px; display: none;
+  }
+  .error-msg.show { display: block; }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  @media (max-width: 900px) {
+    main { padding: 16px; }
+    .grid-top, .grid-bottom { grid-template-columns: 1fr; }
+    header { padding: 16px 20px; }
+    .flow-bar { display: none; }
+    .unlink-result { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo-mark">ZK</div>
+    <div>
+      <div class="header-title">ZKP MULTI-VERIFIER ATTRIBUTE SYSTEM</div>
+      <div class="header-sub">ZKP Based Multi-System Attribute Verification hackathon 2026</div>
+    </div>
+  </div>
+  <div class="status-pill">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">connecting...</span>
+  </div>
+</header>
+
+<main>
+  <div class="flow-bar">
+    <div class="flow-step" id="flow1"><div class="flow-num">1</div>Issue Credential</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" id="flow2"><div class="flow-num">2</div>Generate ZK Proof</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" id="flow3"><div class="flow-num">3</div>Verify (A/B/C)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" id="flow4"><div class="flow-num">4</div>Unlinkability Test</div>
+  </div>
+
+  <div class="grid-top">
+
+    <div class="panel" id="panelIssuer">
+      <div class="panel-header">
+        <div>
+          <div class="panel-label">STEP 1 · ISSUER I</div>
+          <div class="panel-title">Issue Dual-Signed Credential</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="field-row">
+          <div class="field">
+            <label>ATTR_1</label>
+            <input type="text" id="attr1" value="Alice">
+          </div>
+          <div class="field">
+            <label>ATTR_2</label>
+            <input type="number" id="attr2" value="30">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>ATTR_3</label>
+            <input type="number" id="attr3" value="75000">
+          </div>
+          <div class="field">
+            <label>ATTR_5</label>
+            <input type="text" id="attr5" value="Engineering">
+          </div>
+        </div>
+        <div class="field">
+          <label>ATTR_4</label>
+          <div class="checkbox-row">
+            <input type="checkbox" id="attr4" checked>
+            <span>true</span>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="btnIssue" onclick="issueCredential()">
+          Issue BBS+ + Dilithium Credential
+        </button>
+        <div class="error-msg" id="issueError"></div>
+        <div class="result-area" id="issueResult">
+          <div class="result-card">
+            <div class="kv-row">
+              <span class="kv-key">CREDENTIAL ID</span>
+              <span class="kv-val orange" id="resCredId">—</span>
+            </div>
+            <div class="kv-row">
+              <span class="kv-key">CREDENTIAL ROOT</span>
+              <span class="kv-val" id="resCredRoot">—</span>
+            </div>
+            <div class="kv-row">
+              <span class="kv-key">BBS+ SIG SIZE</span>
+              <span class="kv-val" id="resBbsSize">—</span>
+            </div>
+            <div class="kv-row">
+              <span class="kv-key">DILITHIUM SIG SIZE</span>
+              <span class="kv-val" id="resDilSize">—</span>
+            </div>
+          </div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text2);margin-bottom:4px;letter-spacing:0.05em;">W3C VC 2.0</div>
+          <div class="code-block"><pre id="resW3C"></pre></div>
+          <button class="btn btn-secondary" style="margin-top:10px;" onclick="revokeCredential()">
+            Revoke Credential
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panelHolder">
+      <div class="panel-header">
+        <div>
+          <div class="panel-label">STEP 2 · HOLDER H</div>
+          <div class="panel-title">Generate ZK Proof</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="field">
+          <label>SELECT VERIFIER</label>
+          <select id="verifierSelect" onchange="updateVerifierInfo()">
+            <option value="V-A">Verifier A — discloses attr_2, attr_5 · proves attr_3 &gt; 50000</option>
+            <option value="V-B">Verifier B — discloses attr_4 · proves attr_2 &ge; 18 · linkable pseudonym</option>
+            <option value="V-C">Verifier C — discloses attr_1, attr_5 · proves attr_2 &lt; 50</option>
+          </select>
+        </div>
+
+        <div class="verifier-info" id="verifierInfo">
+          <span>Discloses:</span> attr_2, attr_5  &nbsp;|&nbsp; <span>Proves:</span> attr_3 &gt; 50,000
+        </div>
+
+        <button class="btn btn-primary" id="btnProve" onclick="generateProof()" disabled>
+          Generate ZK Proof
+        </button>
+        <div class="error-msg" id="proveError"></div>
+
+        <div class="result-area" id="proveResult">
+          <div class="result-card">
+            <div class="kv-row">
+              <span class="kv-key">PROOF ID</span>
+              <span class="kv-val orange" id="resProofId">—</span>
+            </div>
+            <div class="kv-row">
+              <span class="kv-key">BBS+ PROOF SIZE</span>
+              <span class="kv-val" id="resBbsProofSize">—</span>
+            </div>
+            <div class="kv-row">
+              <span class="kv-key">TOTAL PROOF SIZE</span>
+              <span class="kv-val" id="resTotalProofSize">—</span>
+            </div>
+            <div class="kv-row">
+              <span class="kv-key">DISCLOSED ATTRS</span>
+              <span class="kv-val green" id="resDisclosed">—</span>
+            </div>
+            <div class="kv-row">
+              <span class="kv-key">PREDICATES</span>
+              <span class="kv-val" id="resPredicates">—</span>
+            </div>
+          </div>
+          <div class="tag-green">✓ Zero Raw Attribute Values Transmitted</div>
+          <button class="btn btn-primary" style="margin-top:12px;" id="btnVerify" onclick="verifyProof()">
+            Submit to Verifier ->
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-bottom">
+
+    <div class="panel" id="panelVerifierA">
+      <div class="panel-header">
+        <div>
+          <div class="panel-label">VERIFIER A</div>
+          <div class="panel-title">Verification Result</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="verdict-badge pending" id="verdictA">AWAITING PROOF</div>
+        <div class="result-card">
+          <div class="check-row">
+            <span class="check-label">BBS+ Selective Disclosure</span>
+            <span class="check-val na" id="checkA-bbs">—</span>
+          </div>
+          <div class="check-row">
+            <span class="check-label">Dilithium PQC (ML-DSA-65)</span>
+            <span class="check-val na" id="checkA-dil">—</span>
+          </div>
+          <div class="check-row">
+            <span class="check-label">Revocation Status</span>
+            <span class="check-val na" id="checkA-rev">—</span>
+          </div>
+          <div class="check-row">
+            <span class="check-label">Predicates Satisfied</span>
+            <span class="check-val na" id="checkA-pred">—</span>
+          </div>
+          <div class="check-row">
+            <span class="check-label">Timing</span>
+            <span class="check-val na" id="checkA-time">—</span>
+          </div>
+        </div>
+        <div class="result-card" id="discA" style="display:none;">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text2);margin-bottom:8px;letter-spacing:0.05em;">DISCLOSED TO VERIFIER A ONLY</div>
+          <div id="discAContent"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panelVerifierB">
+      <div class="panel-header">
+        <div>
+          <div class="panel-label">VERIFIER B · LINKABLE</div>
+          <div class="panel-title">Verification Result</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="verdict-badge pending" id="verdictB">AWAITING PROOF</div>
+        <div class="result-card">
+          <div class="check-row">
+            <span class="check-label">BBS+ Selective Disclosure</span>
+            <span class="check-val na" id="checkB-bbs">—</span>
+          </div>
+          <div class="check-row">
+            <span class="check-label">Dilithium PQC (ML-DSA-65)</span>
+            <span class="check-val na" id="checkB-dil">—</span>
+          </div>
+          <div class="check-row">
+            <span class="check-label">Revocation Status</span>
+            <span class="check-val na" id="checkB-rev">—</span>
+          </div>
+          <div class="check-row">
+            <span class="check-label">Predicates Satisfied</span>
+            <span class="check-val na" id="checkB-pred">—</span>
+          </div>
+          <div class="check-row">
+            <span class="check-label">Timing</span>
+            <span class="check-val na" id="checkB-time">—</span>
+          </div>
+        </div>
+        <div class="result-card" id="discB" style="display:none;">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text2);margin-bottom:8px;letter-spacing:0.05em;">DISCLOSED TO VERIFIER B ONLY</div>
+          <div id="discBContent"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panelVerifierC">
+      <div class="panel-header">
+        <div>
+          <div class="panel-label">VERIFIER C</div>
+          <div class="panel-title">Verification Result</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="verdict-badge pending" id="verdictC">AWAITING PROOF</div>
+        <div class="result-card">
+          <div class="check-row">
+            <span class="check-label">BBS+ Selective Disclosure</span>
+            <span class="check-val na" id="checkC-bbs">—</span>
+          </div>
+          <div class="check-row">
+            <span class="check-label">Dilithium PQC (ML-DSA-65)</span>
+            <span class="check-val na" id="checkC-dil">—</span>
+          </div>
+          <div class="check-row">
+            <span class="check-label">Revocation Status</span>
+            <span class="check-val na" id="checkC-rev">—</span>
+          </div>
+          <div class="check-row">
+            <span class="check-label">Predicates Satisfied</span>
+            <span class="check-val na" id="checkC-pred">—</span>
+          </div>
+          <div class="check-row">
+            <span class="check-label">Timing</span>
+            <span class="check-val na" id="checkC-time">—</span>
+          </div>
+        </div>
+        <div class="result-card" id="discC" style="display:none;">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text2);margin-bottom:8px;letter-spacing:0.05em;">DISCLOSED TO VERIFIER C ONLY</div>
+          <div id="discCContent"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="unlink-bar">
+    <div class="unlink-header">
+      <div class="unlink-title">
+        UNLINKABILITY PROOF — SESSION-LEVEL ZKP PRIVACY (A vs B vs C)
+      </div>
+      <button class="btn btn-secondary" style="width:auto;padding:8px 18px;font-size:12px;" id="btnUnlink" onclick="runUnlinkability()" disabled>
+        Run Unlinkability Test
+      </button>
+    </div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--text3);">
+      Generates three proofs from the same credential to A, B, and C. BBS+ re-randomization ensures all proofs are computationally unlinkable. Fiat-Shamir nonces are derived per-session (L4).
+    </div>
+    <div class="error-msg" id="unlinkError"></div>
+    <div class="unlink-result" id="unlinkResult">
+      <div class="unlink-card">
+        <div class="unlink-card-label">PROOF TO VERIFIER A</div>
+        <div class="unlink-card-val highlight" id="unlinkProofA">—</div>
+      </div>
+      <div class="unlink-card">
+        <div class="unlink-card-label">PROOF TO VERIFIER B</div>
+        <div class="unlink-card-val highlight" id="unlinkProofB">—</div>
+      </div>
+      <div class="unlink-card">
+        <div class="unlink-card-label">PROOF TO VERIFIER C</div>
+        <div class="unlink-card-val highlight" id="unlinkProofC">—</div>
+      </div>
+      <div class="unlink-card">
+        <div class="unlink-card-label">RESULT</div>
+        <div class="unlink-card-val green" id="unlinkConclusion">—</div>
+        <div style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--text3);line-height:1.6;" id="unlinkNote"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const API = 'http://localhost:3001';
+
+let currentCredentialId = null;
+let currentProofId = null;
+let lastProofId = null;
+let currentVerifierId = null;
+
+async function checkStatus() {
+  try {
+    const r = await fetch(`${API}/api/status`);
+    const d = await r.json();
+    if (d.issuerReady) {
+      document.getElementById('statusDot').classList.add('live');
+      document.getElementById('statusText').textContent = 'system ready · verifiers: ' + d.verifiers.join(', ');
+      setFlow(1);
+    }
+  } catch {
+    document.getElementById('statusText').textContent = 'server offline';
+    setTimeout(checkStatus, 3000);
+  }
+}
+
+function setFlow(step) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('flow' + i);
+    el.classList.remove('active', 'done');
+    if (i < step) el.classList.add('done');
+    else if (i === step) el.classList.add('active');
+  }
+}
+
+function updateVerifierInfo() {
+  const v = document.getElementById('verifierSelect').value;
+  const el = document.getElementById('verifierInfo');
+  if (v === 'V-A')
+    el.innerHTML = '<span>Discloses:</span> attr_2 (age), attr_5 (category) &nbsp;|&nbsp; <span>Proves:</span> attr_3 (score) &gt; 50,000';
+  else if (v === 'V-B')
+    el.innerHTML = '<span>Discloses:</span> attr_4 (status) &nbsp;|&nbsp; <span>Proves:</span> attr_2 (age) &ge; 18 &nbsp;|&nbsp; <span>Mode:</span> Linkable pseudonym';
+  else
+    el.innerHTML = '<span>Discloses:</span> attr_1 (identifier), attr_5 (category) &nbsp;|&nbsp; <span>Proves:</span> attr_2 (age) &lt; 50';
+}
+
+function highlightJson(obj) {
+  const json = JSON.stringify(obj, null, 2);
+  return json
+    .replace(/(\"[\w@\-_]+\"):/g, '<span class="json-key">$1</span>:')
+    .replace(/: (\"(?:[^\"\\]|\\.)*\")/g, ': <span class="json-str">$1</span>')
+    .replace(/: (true|false)/g, ': <span class="json-bool">$1</span>')
+    .replace(/: (\d+)/g, ': <span class="json-num">$1</span>');
+}
+
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  if (loading) {
+    btn._orig = btn.innerHTML;
+    btn.innerHTML = '<div class="spinner"></div>';
+    btn.disabled = true;
+  } else {
+    btn.innerHTML = btn._orig || btn.innerHTML;
+    btn.disabled = false;
+  }
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function hideError(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+async function issueCredential() {
+  hideError('issueError');
+  setLoading('btnIssue', true);
+
+  try {
+    const body = {
+      attr_1: document.getElementById('attr1').value,
+      attr_2: parseInt(document.getElementById('attr2').value),
+      attr_3: parseInt(document.getElementById('attr3').value),
+      attr_4: document.getElementById('attr4').checked,
+      attr_5: document.getElementById('attr5').value,
+    };
+
+    const r = await fetch(`${API}/api/issue`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error);
+
+    currentCredentialId = d.credentialId;
+
+    document.getElementById('resCredId').textContent = d.credentialId.slice(0, 16) + '...';
+    document.getElementById('resCredRoot').textContent = d.credentialRoot.slice(0, 20) + '...';
+    document.getElementById('resBbsSize').textContent = d.bbsSignatureSize + ' bytes';
+    document.getElementById('resDilSize').textContent = d.dilithiumSignatureSize + ' bytes';
+    document.getElementById('resW3C').innerHTML = highlightJson(d.w3cVC);
+
+    document.getElementById('issueResult').classList.add('show');
+    document.getElementById('panelIssuer').classList.add('highlight');
+    document.getElementById('btnProve').disabled = false;
+    document.getElementById('btnUnlink').disabled = false;
+    setFlow(2);
+  } catch (err) {
+    showError('issueError', err.message);
+  } finally {
+    setLoading('btnIssue', false);
+    document.getElementById('btnIssue').disabled = false;
+  }
+}
+
+async function generateProof() {
+  hideError('proveError');
+  setLoading('btnProve', true);
+
+  try {
+    const verifierId = document.getElementById('verifierSelect').value;
+
+    const pr = await fetch(`${API}/api/prove`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        credentialId: currentCredentialId,
+        verifierId,
+      }),
+    });
+    const pd = await pr.json();
+    if (!pd.success) throw new Error(pd.error);
+
+    currentProofId = pd.proofId;
+    lastProofId = pd.proofId;
+    currentVerifierId = verifierId;
+
+    document.getElementById('resProofId').textContent = pd.proofId.slice(0, 16) + '...';
+    document.getElementById('resBbsProofSize').textContent = pd.bbsProofSize + ' bytes';
+    document.getElementById('resTotalProofSize').textContent = pd.totalProofSize + ' bytes';
+
+    const attrs = Object.entries(pd.disclosedAttributes)
+      .map(([k, v]) => `${k}: ${v}`).join(', ');
+    document.getElementById('resDisclosed').textContent = attrs || '(none)';
+
+    const preds = pd.predicates.map(p =>
+      // When Bulletproof range proofs land, satisfied becomes optional and 'ZK-proven' becomes reachable.
+      `${p.attribute} ${p.operation} ${p.threshold}: ${p.satisfied != null ? (p.satisfied ? 'Yes' : 'No') : 'ZK-proven'}`
+    ).join(' | ');
+    document.getElementById('resPredicates').textContent = preds || '—';
+
+    document.getElementById('proveResult').classList.add('show');
+    document.getElementById('panelHolder').classList.add('highlight');
+    setLoading('btnVerify', false);
+    document.getElementById('btnVerify').disabled = false;
+    setFlow(3);
+  } catch (err) {
+    showError('proveError', err.message);
+  } finally {
+    setLoading('btnProve', false);
+    document.getElementById('btnProve').disabled = false;
+  }
+}
+
+async function verifyProof() {
+  if (!currentVerifierId) return;
+  if (!lastProofId) return;
+  setLoading('btnVerify', true);
+
+  try {
+    const r = await fetch(`${API}/api/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ proofId: lastProofId, verifierId: currentVerifierId }),
+    });
+    const d = await r.json();
+
+    if (!r.ok || d.success === false) {
+      const suffixMapErr = { 'V-A': 'A', 'V-B': 'B', 'V-C': 'C' };
+      const suffixErr = suffixMapErr[currentVerifierId];
+      if (suffixErr) {
+        const verdict = document.getElementById('verdict' + suffixErr);
+        verdict.className = 'verdict-badge rejected';
+        verdict.textContent = 'REJECTED';
+        ['bbs','dil','rev','pred','time'].forEach(k => {
+          const el = document.getElementById(`check${suffixErr}-${k}`);
+          el.className = 'check-val na';
+          el.textContent = '—';
+        });
+        const discEl = document.getElementById('disc' + suffixErr);
+        const discContent = document.getElementById('disc' + suffixErr + 'Content');
+        discEl.style.display = 'block';
+        discContent.innerHTML = '<div class="kv-row"><span class="kv-key" style="color:var(--text3);font-style:italic;">Proof already consumed — replay rejected</span></div>';
+      }
+      setLoading('btnVerify', false);
+      return;
+    }
+
+    const suffixMap = { 'V-A': 'A', 'V-B': 'B', 'V-C': 'C' };
+    const suffix = suffixMap[currentVerifierId];
+    const panelMap = { 'V-A': 'panelVerifierA', 'V-B': 'panelVerifierB', 'V-C': 'panelVerifierC' };
+
+    const verdict = document.getElementById('verdict' + suffix);
+    verdict.className = 'verdict-badge ' + (d.verified ? 'accepted' : 'rejected');
+    verdict.textContent = d.verified ? 'ACCEPTED' : 'REJECTED';
+
+    const setCheck = (id, val, invert) => {
+      const el = document.getElementById(id);
+      el.className = 'check-val ' + (val ? (invert ? 'fail' : 'pass') : (invert ? 'pass' : 'fail'));
+      el.textContent = val ? (invert ? '✗ Yes' : '✓ Yes') : (invert ? '✓ No' : '✗ No');
+    };
+
+    setCheck(`check${suffix}-bbs`, d.bbsVerified ?? false, false);
+    setCheck(`check${suffix}-dil`, d.dilithiumVerified ?? false, false);
+    setCheck(`check${suffix}-rev`, d.isRevoked ?? false, true);
+    setCheck(`check${suffix}-pred`, (d.predicateResults ?? []).every(p => p.satisfied), false);
+    document.getElementById(`check${suffix}-time`).textContent = (d.timingMs ?? '—') + (d.timingMs != null ? 'ms' : '');
+    document.getElementById(`check${suffix}-time`).className = 'check-val na';
+
+    const discEl = document.getElementById('disc' + suffix);
+    const discContent = document.getElementById('disc' + suffix + 'Content');
+    discEl.style.display = 'block';
+    discContent.innerHTML = Object.entries(d.disclosedAttributes ?? {})
+      .map(([k, v]) => `<div class="kv-row"><span class="kv-key">${k}</span><span class="kv-val green">${v}</span></div>`)
+      .join('') || '<div class="kv-row"><span class="kv-key" style="color:var(--text3)">Proof was replayed — no attributes disclosed</span></div>';
+
+    if (d.verified) {
+      document.getElementById(panelMap[currentVerifierId]).classList.add('highlight');
+    }
+    setFlow(3);
+    setLoading('btnVerify', false);
+  } catch (err) {
+    console.error(err);
+    if (!String(err).includes('predicateResults') && !String(err).includes('Proof not found')) {
+      showError('proveError', 'Verification failed: ' + (err instanceof Error ? err.message : String(err)));
+    }
+    setLoading('btnVerify', false);
+  }
+}
+
+async function revokeCredential() {
+  if (!currentCredentialId) return;
+  if (!confirm('Revoke credential ' + currentCredentialId.slice(0,8) + '...?')) return;
+  try {
+    const r = await fetch(`${API}/api/revoke`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credentialId: currentCredentialId }),
+    });
+    const d = await r.json();
+    if (d.success) alert('Credential revoked. Next verification will show REJECTED.');
+  } catch (err) {
+    alert('Revoke failed: ' + err.message);
+  }
+}
+
+async function runUnlinkability() {
+  hideError('unlinkError');
+  setLoading('btnUnlink', true);
+  document.getElementById('unlinkResult').classList.remove('show');
+
+  try {
+    const pA = await (await fetch(`${API}/api/prove`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credentialId: currentCredentialId, verifierId: 'V-A' }),
+    })).json();
+
+    const pB = await (await fetch(`${API}/api/prove`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credentialId: currentCredentialId, verifierId: 'V-B' }),
+    })).json();
+
+    const pC = await (await fetch(`${API}/api/prove`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credentialId: currentCredentialId, verifierId: 'V-C' }),
+    })).json();
+
+    if (!pA.success || !pB.success || !pC.success)
+      throw new Error('Proof generation failed');
+
+    const allUnlinked = (pA.proofId !== pB.proofId && pA.proofId !== pC.proofId && pB.proofId !== pC.proofId);
+
+    document.getElementById('unlinkProofA').textContent = pA.proofId;
+    document.getElementById('unlinkProofB').textContent = pB.proofId;
+    document.getElementById('unlinkProofC').textContent = pC.proofId;
+    document.getElementById('unlinkConclusion').textContent = allUnlinked
+      ? 'All 3 BBS+ proofs are computationally unlinkable ✓'
+      : 'Unexpected: duplicate proof IDs detected ✗';
+    document.getElementById('unlinkNote').textContent =
+      'A sees: ' + Object.keys(pA.disclosedAttributes).join(', ') +
+      ' | B sees: ' + Object.keys(pB.disclosedAttributes).join(', ') +
+      ' | C sees: ' + Object.keys(pC.disclosedAttributes).join(', ') +
+      '. No verifier can link these proofs to each other.';
+
+    document.getElementById('unlinkResult').classList.add('show');
+    setFlow(4);
+  } catch (err) {
+    showError('unlinkError', err.message);
+  } finally {
+    setLoading('btnUnlink', false);
+    document.getElementById('btnUnlink').disabled = false;
+  }
+}
+
+checkStatus();
+</script>
+</body>
+</html>
