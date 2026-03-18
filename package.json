@@ -1,0 +1,63 @@
+{
+  "name": "zkp-multi-verifier",
+  "version": "1.0.0",
+  "description": "ZKP-based multi-system attribute verification",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "demo": "ts-node src/demo.ts",
+    "test": "jest --runInBand --verbose",
+    "test:issuer": "jest tests/issuer.test.ts --verbose",
+    "test:holder": "jest tests/holder.test.ts --verbose",
+    "test:verifier": "jest tests/verifier.test.ts --verbose",
+    "test:unlinkability": "jest tests/unlinkability.test.ts --verbose",
+    "test:w3c": "jest tests/w3c.test.ts --verbose",
+    "benchmark": "npx ts-node src/benchmark/benchmark.ts",
+    "api": "npx ts-node api/server.ts"
+  },
+  "dependencies": {
+    "@mattrglobal/bbs-signatures": "^1.3.1",
+    "@noble/post-quantum": "^0.5.4",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "js-sha256": "^0.11.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^9.0.0",
+    "babel-jest": "^30.2.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.ts"
+    ],
+    "verbose": true,
+    "transformIgnorePatterns": [
+      "node_modules/(?!(@noble/post-quantum|@noble/curves|@noble/hashes|@noble/ciphers))"
+    ],
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "useESM": false,
+          "tsconfig": {
+            "module": "commonjs"
+          }
+        }
+      ],
+      "^.+\\.js$": "babel-jest"
+    }
+  }
+}

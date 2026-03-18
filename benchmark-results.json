@@ -1,0 +1,99 @@
+{
+  "meta": {
+    "date": "2026-03-07T11:59:58.428Z",
+    "runs": 5,
+    "system": "linux",
+    "nodeVersion": "v20.20.0"
+  },
+  "timings": {
+    "Key Generation (BBS+ + Dilithium)": {
+      "min_ms": 6,
+      "max_ms": 87,
+      "mean_ms": 28.6,
+      "median_ms": 9
+    },
+    "Credential Issuance": {
+      "min_ms": 31,
+      "max_ms": 67,
+      "mean_ms": 41,
+      "median_ms": 36
+    },
+    "Proof Generation (Verifier A)": {
+      "min_ms": 679,
+      "max_ms": 716,
+      "mean_ms": 693.4,
+      "median_ms": 690
+    },
+    "Proof Generation (Verifier B)": {
+      "min_ms": 665,
+      "max_ms": 706,
+      "mean_ms": 682.8,
+      "median_ms": 677
+    },
+    "Proof Generation (Verifier C)": {
+      "min_ms": 638,
+      "max_ms": 735,
+      "mean_ms": 674.8,
+      "median_ms": 669
+    },
+    "BBS+ Verification": {
+      "min_ms": 38,
+      "max_ms": 55,
+      "mean_ms": 44.6,
+      "median_ms": 45
+    },
+    "Dilithium Verification": {
+      "min_ms": 2,
+      "max_ms": 9,
+      "mean_ms": 4.6,
+      "median_ms": 4
+    },
+    "Dilithium Audit (offline)": {
+      "min_ms": 4,
+      "max_ms": 9,
+      "mean_ms": 6.8,
+      "median_ms": 6
+    },
+    "Full Verification (A)": {
+      "min_ms": 791,
+      "max_ms": 947,
+      "mean_ms": 872.2,
+      "median_ms": 890
+    },
+    "Full Verification (B)": {
+      "min_ms": 874,
+      "max_ms": 1242,
+      "mean_ms": 1012.8,
+      "median_ms": 921
+    },
+    "Full Verification (C)": {
+      "min_ms": 983,
+      "max_ms": 1299,
+      "mean_ms": 1065.6,
+      "median_ms": 989
+    },
+    "End-to-End (issue -> verify A)": {
+      "min_ms": 1740,
+      "max_ms": 2024,
+      "mean_ms": 1865,
+      "median_ms": 1849
+    }
+  },
+  "proofSizes": {
+    "bbsProof_bytes": 608,
+    "dilithiumSignature_bytes": 3309,
+    "combined_bytes": 3917,
+    "w3cVcJson_bytes": 6618
+  },
+  "privacyAnalysis": {
+    "unlinkabilityPairs": 10,
+    "pairResults": {
+      "A↔A": true,
+      "A↔B": true,
+      "A↔C": true,
+      "B↔C": true
+    },
+    "allPassed": true,
+    "conclusion": "Session-level unlinkability CONFIRMED across all 3 verifiers"
+  }
+}
